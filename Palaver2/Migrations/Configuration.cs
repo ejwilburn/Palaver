@@ -20,19 +20,17 @@ along with Palaver.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Palaver2.Migrations
 {
-    using System;
-    using System.Data.Entity;
     using System.Data.Entity.Migrations;
-    using System.Linq;
+    using Models;
 
-    internal sealed class Configuration : DbMigrationsConfiguration<Palaver2.Models.PalaverDb>
+    internal sealed class Configuration : DbMigrationsConfiguration<PalaverContext>
     {
         public Configuration()
         {
             AutomaticMigrationsEnabled = false;
         }
 
-        protected override void Seed(Palaver2.Models.PalaverDb context)
+        protected override void Seed(PalaverContext context)
         {
             //  This method will be called after migrating to the latest version.
 

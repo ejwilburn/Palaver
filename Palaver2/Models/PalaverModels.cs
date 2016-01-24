@@ -21,17 +21,19 @@ along with Palaver.  If not, see <http://www.gnu.org/licenses/>.
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 using System.Data.Entity;
 using CodeFirstMembership.Models;
 using System.ComponentModel.DataAnnotations;
 using CodeFirstMembership;
 using Palaver2.Helpers;
+using Linq2DynamoDb.DataContext;
+using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2;
 
 namespace Palaver2.Models
 {
-    public class Comment
+    public class Comment : EntityBase
     {
         public int CommentId { get; set; }
         [Required()]
@@ -44,6 +46,7 @@ namespace Palaver2.Models
         [AllowHtml]
         public string Text { get; set; }
         public int? ParentCommentId { get; set; }
+        [DynamoDBIgnore]
         public virtual ICollection<Comment> Comments { get; set; }
         public int? SubjectId { get; set; }
 
@@ -62,31 +65,42 @@ namespace Palaver2.Models
         }
     }
 
-    public class UnreadItem
+    public class UnreadItem : EntityBase
     {
         public int UnreadItemId { get; set; }
         public virtual Comment Comment { get; set; }
         public virtual User User { get; set; }
     }
 
-    public class Subscription
+    public class Subscription : EntityBase
     {
         public int SubscriptionId { get; set; }
         public virtual Comment Subject { get; set; }
         public virtual User User { get; set; }
     }
 
-    public class PalaverDb : DbContext
+    public class PalaverContext : DataContext
     {
-        public DbSet<Comment> Comments { get; set; }
-        public DbSet<UnreadItem> UnreadItems { get; set; }
-        public DbSet<Subscription> Subscriptions { get; set; }
+        public DataTable<Comment> Comments { get { return this.GetTable<Comment>(); } }
+        public DataTable<UnreadItem> UnreadItems { get { return this.GetTable<UnreadItem>(); } }
+        public DataTable<Subscription> Subscriptions { get { return this.GetTable<Subscription>(); } }
+        public DataTable<User> Users { get { return this.GetTable<User>(); } }
+        public DataTable<Role> Roles { get { return this.GetTable<Role>(); } }
 
-        public DbSet<User> Users { get; set; }
-        public DbSet<Role> Roles { get; set; }
+        private static readonly AmazonDynamoDBClient DynamoDbClient;
+        private static readonly String TableNamePrefix = "Palaver";
 
-        public PalaverDb() : base("Palaver") { this.Configuration.LazyLoadingEnabled = false; }
-        
+        static PalaverContext()
+        {
+            string accessKey = "",
+                secretKey = "";
+            DynamoDbClient = new AmazonDynamoDBClient(accessKey, secretKey);
+        }
+
+        public PalaverContext() : base(DynamoDbClient, TableNamePrefix)
+        {
+        }
+
         public int GetUnreadCommentCount(Comment subject, Guid userid)
         {
             var q = from c in this.Comments
@@ -119,38 +133,6 @@ namespace Palaver2.Models
             }
 
             return counts;
-        }
-    }
-
-    public class CodeFirstContextInit : DropCreateDatabaseAlways<PalaverDb>
-    {
-
-        protected override void Seed(PalaverDb context)
-        {
-            CodeFirstSecurity.CreateAccount("Demo", "Demo", "demo@demo.com");
-
-            User u = context.Users.FirstOrDefault();
-            Comment c = new Comment { User = u, Text = "testing", CreatedTime = DateTime.UtcNow, LastUpdatedTime = DateTime.UtcNow };
-            context.Comments.Add(c);
-            context.SaveChanges();
-            c.SubjectId = c.CommentId;
-
-            context.Comments.Add(new Comment { ParentCommentId = c.CommentId, User = u, Text = "testing 1", CreatedTime = DateTime.UtcNow, LastUpdatedTime = DateTime.UtcNow, SubjectId = c.SubjectId });
-            context.Comments.Add(new Comment { ParentCommentId = c.CommentId, User = u, Text = "testing 2", CreatedTime = DateTime.UtcNow, LastUpdatedTime = DateTime.UtcNow, SubjectId = c.SubjectId });
-            context.Comments.Add(new Comment { ParentCommentId = c.CommentId, User = u, Text = "testing 3", CreatedTime = DateTime.UtcNow, LastUpdatedTime = DateTime.UtcNow, SubjectId = c.SubjectId });
-
-            context.SaveChanges();
-
-            foreach (Comment cc in context.Comments)
-            {
-                foreach (User uu in context.Users)
-                {
-                    if (uu.UserId != u.UserId)
-                        context.UnreadItems.Add(new UnreadItem { Comment = cc, User = uu });
-                }
-            }
-
-            context.SaveChanges();
         }
     }
 }

@@ -73,22 +73,8 @@ namespace Palaver2
         {
             AreaRegistration.RegisterAllAreas();
 
-            Database.SetInitializer<PalaverDb>(new DropCreateDatabaseIfModelChanges<Palaver2.Models.PalaverDb>());
-            //Database.SetInitializer<PalaverDb>(new DropCreateDatabaseAlways<Palaver2.Models.PalaverDb>());
-
-            //Database.SetInitializer<PalaverDb>(new CodeFirstContextInit());
-            //var Context = new PalaverDb();
-            //Context.Users.FirstOrDefault();
-
-            // Update the database if needed.
-            var migratorConfig = new Palaver2.Migrations.Configuration();
-            var dbMigrator = new DbMigrator(migratorConfig);
-            dbMigrator.Update();
-            
             RegisterGlobalFilters(GlobalFilters.Filters);
             RegisterRoutes(RouteTable.Routes);
-
-            //GlobalHost.Configuration.ConnectionTimeout = TimeSpan.FromSeconds( 20 );
         }
     }
 }

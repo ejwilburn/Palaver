@@ -8,12 +8,13 @@ using System.Diagnostics;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Data.Entity;
+using Linq2DynamoDb.DataContext;
+using Amazon.DynamoDBv2.DataModel;
 
 namespace CodeFirstMembership.Models
 {
-    public class User
+    public class User : EntityBase
     {
-
         //Membership required
         [Key()]
         public virtual Guid UserId { get; set; }
@@ -37,6 +38,7 @@ namespace CodeFirstMembership.Models
         public virtual string PasswordVerificationToken { get; set; }
         public virtual Nullable<DateTime> PasswordVerificationTokenExpirationDate { get; set; }
 
+        [DynamoDBIgnore]
         public virtual ICollection<Role> Roles { get; set; }
 
         //Optional
@@ -47,7 +49,7 @@ namespace CodeFirstMembership.Models
 
     }
 
-    public class Role
+    public class Role : EntityBase
     {
         //Membership required
         [Key()]

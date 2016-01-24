@@ -137,6 +137,7 @@ namespace CodeFirstMembership
             MembershipUser user = Membership.GetUser(userName);
             if (user == null)
             {
+                Logout();
                 return Guid.Empty;
             }
             return Guid.Parse(user.ProviderUserKey.ToString());
