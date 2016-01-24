@@ -33,6 +33,7 @@ using Amazon.DynamoDBv2;
 
 namespace Palaver2.Models
 {
+    // Test.
     public class Comment : EntityBase
     {
         public int CommentId { get; set; }
