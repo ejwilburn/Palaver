@@ -19,8 +19,10 @@ along with Palaver.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 function requestNotifications() {
-    if (window.webkitNotifications && window.webkitNotifications.checkPermission() != 0) {
-        window.webkitNotifications.requestPermission();
+	if (!Notification)
+		return;
+    else if (Notification.permission !== "granted") {
+        Notification.requestPermission();
     }
 }
 

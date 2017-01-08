@@ -95,6 +95,11 @@ namespace Palaver2.Helpers
             return new HtmlString(html.ToString());
         }
 
+		public static string BuildComments(Comment comment)
+		{
+			return BuildComments(comment, null);
+		}
+
         public static string BuildComments(Comment comment, List<int> unreadItems)
         {
             StringBuilder html = new StringBuilder();
@@ -133,7 +138,7 @@ namespace Palaver2.Helpers
             html.AppendFormat("<div title=\"Reply\" class=\"reply\" onclick=\"WriteReply({0})\"><HR class=\"reply\" /></div>",  comment.CommentId);
             html.AppendLine("</li>");
 
-            return html.ToString();
+			return html.ToString();
         }
 
         public static string BuildThreads(IEnumerable<Comment> threads)
@@ -169,15 +174,21 @@ namespace Palaver2.Helpers
                 return string.Format("<li data-thread-id=\"{0}\" class=\"newcomments\" onclick=\"GetComments({0})\">" +
                     "<span class=\"threadTime\">[{3}]</span> - <a href=\"javascript:;\">{1}</a>" +
                     "&nbsp;<span id=\"newCommentsCount{0}\" class=\"threadNewComments\">({2})</span>" +
+                    // Unsubscribe disabled for now.
+                    /*
                     "<img src=\"" + rootUrl + "Content/images/Delete-icon.png\" height=\"14px\" " +
                     "alt=\"Unsubscribe from Thread\" onclick=\"unsubscribe(event, {0})\" class=\"unsubscribe\" />" +
+                    */
                     "</li>",
                     comment.CommentId, comment.Text, unreadCount, getDisplayTime(comment.LastUpdatedTime.ToLocalTime()), rootUrl);
             else
                 return string.Format("<li data-thread-id=\"{0}\" onclick=\"GetComments({0})\"><span class=\"threadTime\">[{3}]</span> - <a  href=\"javascript:;\">{1}</a>" +
                     "&nbsp;<span id=\"newCommentsCount{0}\" class=\"threadNewComments\"></span>" +
+                    // Unsubscribe disabled for now.
+                    /*
                     "<img src=\"" + rootUrl + "Content/images/Delete-icon.png\" height=\"14px\" " +
                     "alt=\"Unsubscribe from Thread\" onclick=\"unsubscribe(event, {0})\" class=\"unsubscribe\" />" +
+                    */
                     "</li>",
                     comment.CommentId, comment.Text, unreadCount, getDisplayTime(comment.LastUpdatedTime.ToLocalTime()), rootUrl);
         }

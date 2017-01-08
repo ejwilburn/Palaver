@@ -23,11 +23,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using System.Data.SqlClient;
 using System.Data.Entity;
+using System.Data.Entity.Migrations;
 using CodeFirstMembership.Models;
 using System.ComponentModel.DataAnnotations;
 using CodeFirstMembership;
 using Palaver2.Helpers;
+using Newtonsoft.Json;
+using System.Data.Common;
+using System.Data.Entity.Infrastructure;
+using System.Data.Entity.Infrastructure.DependencyResolution;
 
 namespace Palaver2.Models
 {
@@ -55,7 +61,7 @@ namespace Palaver2.Models
 
         public Comment(string commentText, User creator)
         {
-            CreatedTime = DateTime.UtcNow;
+			CreatedTime = DateTime.UtcNow;
             LastUpdatedTime = DateTime.UtcNow;
             User = creator;
             Text = CustomHtmlHelpers.Linkify(commentText);
@@ -64,29 +70,78 @@ namespace Palaver2.Models
 
     public class UnreadItem
     {
+		[Required()]
         public int UnreadItemId { get; set; }
+		[Required()]
         public virtual Comment Comment { get; set; }
+		[Required()]
         public virtual User User { get; set; }
     }
 
+	/*
     public class Subscription
     {
         public int SubscriptionId { get; set; }
         public virtual Comment Subject { get; set; }
         public virtual User User { get; set; }
     }
+    */
 
-    public class PalaverDb : DbContext
+	/*
+	internal sealed class EntityFrameworkDbConfiguration : DbConfiguration
+	{
+		/// <summary>
+		/// The provider manifest token to use for SQL Server.
+		/// </summary>
+		private const string SqlServerManifestToken = @"2005";
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="EntityFrameworkDbConfiguration"/> class.
+		/// </summary>
+		public EntityFrameworkDbConfiguration()
+		{
+			this.AddDependencyResolver(new SingletonDependencyResolver<IManifestTokenResolver>(new ManifestTokenService()));
+		}
+
+		/// <inheritdoc />
+		private sealed class ManifestTokenService : IManifestTokenResolver
+		{
+			/// <summary>
+			/// The default token resolver.
+			/// </summary>
+			private static readonly IManifestTokenResolver DefaultManifestTokenResolver = new DefaultManifestTokenResolver();
+
+			/// <inheritdoc />
+			public string ResolveManifestToken(DbConnection connection)
+			{
+				if (connection is SqlConnection)
+				{
+					return SqlServerManifestToken;
+				}
+
+				return DefaultManifestTokenResolver.ResolveManifestToken(connection);
+			}
+		}
+	}*/
+
+
+	public class PalaverDb : DbContext
     {
         public DbSet<Comment> Comments { get; set; }
         public DbSet<UnreadItem> UnreadItems { get; set; }
-        public DbSet<Subscription> Subscriptions { get; set; }
+        //public DbSet<Subscription> Subscriptions { get; set; }
 
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
 
-        public PalaverDb() : base("Palaver") { this.Configuration.LazyLoadingEnabled = false; }
-        
+		public PalaverDb() : base("Palaver")
+		{
+			Database.SetInitializer<PalaverDb>(null);
+			//Database.SetInitializer<PalaverDb>(new CodeFirstContextInit());
+			this.Database.CommandTimeout = 180;
+			this.Configuration.LazyLoadingEnabled = false;
+		}
+
         public int GetUnreadCommentCount(Comment subject, Guid userid)
         {
             var q = from c in this.Comments
@@ -127,6 +182,8 @@ namespace Palaver2.Models
 
         protected override void Seed(PalaverDb context)
         {
+			base.Seed(context);
+
             CodeFirstSecurity.CreateAccount("Demo", "Demo", "demo@demo.com");
 
             User u = context.Users.FirstOrDefault();

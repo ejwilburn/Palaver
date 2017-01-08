@@ -40,10 +40,10 @@ namespace Palaver2.Controllers
         {
             int intThreadId;
 
-            Guid userId = CodeFirstSecurity.GetUserId(HttpContext.User.Identity.Name);
+            // Guid userId = CodeFirstSecurity.GetUserId(HttpContext.User.Identity.Name);
             var comments = from c in db.Comments
-                           join s in db.Subscriptions on c.CommentId equals s.Subject.CommentId
-                           where !c.ParentCommentId.HasValue && s.User.UserId == userId
+                           // join s in db.Subscriptions on c.CommentId equals s.Subject.CommentId
+                           where !c.ParentCommentId.HasValue // && s.User.UserId == userId
                            orderby c.LastUpdatedTime descending
                            select c;
             ViewBag.Comments = comments;
@@ -59,10 +59,10 @@ namespace Palaver2.Controllers
         {
             int intThreadId;
 
-            Guid userId = CodeFirstSecurity.GetUserId(HttpContext.User.Identity.Name);
+            // Guid userId = CodeFirstSecurity.GetUserId(HttpContext.User.Identity.Name);
             var comments = from c in db.Comments
-                           join s in db.Subscriptions on c.CommentId equals s.Subject.CommentId
-                           where !c.ParentCommentId.HasValue && s.User.UserId == userId
+                           // join s in db.Subscriptions on c.CommentId equals s.Subject.CommentId
+                           where !c.ParentCommentId.HasValue // && s.User.UserId == userId
                            orderby c.LastUpdatedTime descending
                            select c;
             ViewBag.Comments = comments;
@@ -79,10 +79,10 @@ namespace Palaver2.Controllers
             int intThreadId;
             int intCommentId;
 
-            Guid userId = CodeFirstSecurity.GetUserId(HttpContext.User.Identity.Name);
+            // Guid userId = CodeFirstSecurity.GetUserId(HttpContext.User.Identity.Name);
             var comments = from c in db.Comments
-                           join s in db.Subscriptions on c.CommentId equals s.Subject.CommentId
-                           where !c.ParentCommentId.HasValue && s.User.UserId == userId
+                           // join s in db.Subscriptions on c.CommentId equals s.Subject.CommentId
+                           where !c.ParentCommentId.HasValue // && s.User.UserId == userId
                            orderby c.LastUpdatedTime descending
                            select c;
             ViewBag.Comments = comments;
@@ -108,10 +108,10 @@ namespace Palaver2.Controllers
         [Authorize]
         public ActionResult GetThreads()
         {
-            Guid userId = CodeFirstSecurity.GetUserId(HttpContext.User.Identity.Name);
+            // Guid userId = CodeFirstSecurity.GetUserId(HttpContext.User.Identity.Name);
             var comments = from c in db.Comments
-                           join s in db.Subscriptions on c.CommentId equals s.Subject.CommentId
-                           where !c.ParentCommentId.HasValue && s.User.UserId == userId
+                           // join s in db.Subscriptions on c.CommentId equals s.Subject.CommentId
+                           where !c.ParentCommentId.HasValue // && s.User.UserId == userId
                            orderby c.LastUpdatedTime descending
                            select c;
             return Content(Helpers.CustomHtmlHelpers.BuildThreads(comments));

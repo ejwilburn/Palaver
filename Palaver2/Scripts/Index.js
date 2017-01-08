@@ -27,6 +27,7 @@ var _isSafariMobile = isSafariMobile();
 var NOTIFICATION_SNIPPET_SIZE = 100;
 var NOTIFICATION_DURATION = 5000;
 var IPAD_SIGNALR_DELAY = 200;
+var wowhead_tooltips = { "colorlinks": true, "iconizelinks": true, "renamelinks": true };
 
 // Establish state variables
 var History = window.History, // Note: We are using a capital H instead of a lower h
@@ -58,11 +59,6 @@ function initPage(baseUrl, threadId, commentId) {
             });
         }, 1000);
     }
-
-    // Setup syntax highligher options.
-    SyntaxHighlighter.config.tagName = "pre";
-    SyntaxHighlighter.defaults['html-script'] = false;
-    SyntaxHighlighter.defaults['toolbar'] = false;
 
     // Register our primary key event handler for the page.
     $(document).keydown(pageKeyDown);
@@ -103,6 +99,8 @@ function initPage(baseUrl, threadId, commentId) {
     });
 
     // Set up hover for the unsubscribe buttons for threads.
+    // Disabled for now.
+    /*
     $('div#threads .unsubscribe').hide();
     $('div#threads ul li').hover(function () {
         $(this).children('.unsubscribe').show();
@@ -110,45 +108,98 @@ function initPage(baseUrl, threadId, commentId) {
     function () {
         $(this).children('.unsubscribe').hide();
     });
+    */
+
+    // Load wowhead script after the page is loaded to stop it from blocking.
+    $.getScript('//wow.zamimg.com/widgets/power.js');
+}
+
+function showDisconnected()
+{
+	$.blockUI({
+	   	message: 'Disconnected.  Attempting to reconnect...',
+    	css: {
+	        border: 'none',
+	        padding: '15px',
+	        backgroundColor: '#000',
+	        '-webkit-border-radius': '10px',
+	        '-moz-border-radius': '10px',
+	        opacity: .5,
+	        color: '#fff'
+	    }
+	});
+}
+
+function hideDisconnected()
+{
+	$.unblockUI();
 }
 
 function startSignalr()
 {
-    _srConnection = $.connection.messageHub;
+    _srConnection = $.connection.MessageHub;
     _srConnection.client.addThread = addThread;
     _srConnection.client.addReply = addReply;
 
     $.connection.hub.error(function (error) {
-        if (error.statusText != 'OK' && console)
-            console.warn(error);
+    	if (console)
+    	{
+    		if (error)
+    			console.log(error);
+    		else
+    			console.log('Unknown SignalR hub error.');
+    	}
     });
 
-    $.connection.hub.stateChanged(function (change) {
-        if (!console)
-            return;
-        if (change.newState === $.signalR.connectionState.reconnecting)
-            console.log('SignalR reconnecting.');
-        else if (change.newState == $.signalR.connectionState.connected)
-            console.log('SignalR connected.');
-        else if (change.newState == $.signalR.connectionState.disconnected)
-            console.log('SignalR disconnected.');
-    });
+	$.connection.hub.connectionSlow(function () {
+		if (console)
+		    console.log('SignalR is currently experiencing difficulties with the connection.')
+	});
+
+	$.connection.hub.reconnecting(function () {
+		showDisconnected();
+		if (console)
+			console.log('SignalR connection lost, reconnecting.');
+	});
 
     // Try to reconnect every 5 seconds if disconnected.
     $.connection.hub.disconnected(function () {
-        console.log('SignlR reconnecting in 5 seconds.');
+        showDisconnected();
+    	if (console)
+        	console.log('SignlR lost its connection, reconnecting in 5 seconds.');
+
         setTimeout(function () {
-            console.log('SignlR delayed reconnection in progress.');
-            $.connection.hub.start();
+        	if (console)
+            	console.log('SignlR delayed reconnection in progress.');
+            startHub();
         }, 5000); // Restart connection after 5 seconds.
     });
 
+    $.connection.hub.reconnected(function() {
+    	if (console)
+    		console.log('SignalR reconnected.');
+
+    	triedReconnecting = false;
+    	hideDisconnected();
+    });
+
+    $.connection.hub.logging = true;
     if (!_isSafariMobile)
-        $.connection.hub.start();
+    	startHub();
     else {
         // Delay the start to avoid breaking safari mobile.
-        window.setTimeout(function () { $.connection.hub.start() }, IPAD_SIGNALR_DELAY);
+        window.setTimeout(function () { startHub() }, IPAD_SIGNALR_DELAY);
     }
+}
+
+function startHub()
+{
+	$.connection.hub.start({ transport: [ 'foreverFrame', 'longPolling' ] }).done(function () {
+		triedReconnecting = false;
+		hideDisconnected();
+		if (console)
+		    console.log("Connected, transport = " + $.connection.hub.transport.name);
+	});
 }
 
 function addLayouts() {
@@ -196,13 +247,17 @@ function addThemeSwitcher(container, position) {
 function addThread(thread)
 {
     $('#threads ul').prepend(thread.text);
+    // Unsubscribe disabled for now.
+    /*
     $('#threads ul .unsubscribe').first().hide();
     $('div#threads ul li').first().hover(function () {
+         $(this).children('.unsubscribe').show();
         $(this).children('.unsubscribe').show();
     },
     function () {
         $(this).children('.unsubscribe').hide();
     });
+    */
 
     var user = $('#userid').val();
     if (user != thread.userid) {
@@ -257,31 +312,33 @@ function addReply(reply)
     else
         minutes = now.getMinutes().toString();
     $(thread).children('.threadTime').html('[' + hour + ':' + minutes + ' ' + ampm + ']');
-    SyntaxHighlighter.highlight();
     updateTitle();
 }
 
 // Notify the user of new comments/threads
 function notify(title, message, threadId, commentId) {
-    if (window.webkitNotifications && window.webkitNotifications.checkPermission() == 0) {
-        // Strip the message of any HTML using a temporary div.
-        var tempDiv = document.createElement('DIV');
-        tempDiv.innerHTML = (message == null ? '' : '<ul>' + message + '</ul>');
-        var innerDiv = $(tempDiv).find('div')[0];
-        $(innerDiv).children('span.user').remove();
-        $(innerDiv).children('span.commentTime').remove();
-        var filteredMessage = innerDiv.textContent || innerDiv.innerText;
-        filteredMessage = $.trim(filteredMessage.substring(0, NOTIFICATION_SNIPPET_SIZE));
-        var notification = window.webkitNotifications.createNotification(_baseUrl + '/Content/images/new_message-icon.gif', title, filteredMessage);
-        notification.onclick = function () {
-            window.focus();
-            _initialCommentId = commentId;
-            GetComments(threadId);
-            this.cancel();
-        };
-        notification.show();
-        setTimeout(function () { if (notification) notification.cancel(); }, NOTIFICATION_DURATION);
-    }
+	if (!Notification || Notification.permission !== "granted")
+		return;
+
+    // Strip the message of any HTML using a temporary div.
+    var tempDiv = document.createElement('DIV');
+    tempDiv.innerHTML = (message == null ? '' : '<ul>' + message + '</ul>');
+    var innerDiv = $(tempDiv).find('div')[0];
+    $(innerDiv).children('span.user').remove();
+    $(innerDiv).children('span.commentTime').remove();
+    var filteredMessage = innerDiv.textContent || innerDiv.innerText;
+    filteredMessage = $.trim(filteredMessage.substring(0, NOTIFICATION_SNIPPET_SIZE));
+    var notification = new Notification( title, {
+    	icon: _baseUrl + '/Content/images/new_message-icon.gif',
+    	body: filteredMessage
+    });
+    notification.onclick = function () {
+        window.focus();
+        _initialCommentId = commentId;
+        GetComments(threadId);
+        this.cancel();
+    };
+    setTimeout(function () { if (notification) notification.close(); }, NOTIFICATION_DURATION);
 }
 
 function updateTitle() {
@@ -402,7 +459,6 @@ function GetComments(id, isBack) {
             thread,
             function (data) {
                 $('#comments').html(data);
-                SyntaxHighlighter.highlight();
                 $('.newcomment').click(function () {
                     markRead(this);
                 });
@@ -435,26 +491,7 @@ function WriteReply(id) {
 
     // Create a new reply div.
     $('li[data-id="' + id + '"]').append('<div id="replyDiv" style="margin-left: 20px;" onkeypress="replyKeyPressed(event,' + id + ')"><textarea id="replyBox" style="height: 15px; width: 100%; margin:0;" /><a id="sendReplyLink" tabindex="1" href="javascript:;" onclick="SendReply(' + id + ')" class="submit">submit</a><a tabindex="2" href="javascript:;" onclick="CancelReply()">cancel</a></div>');
-    $('#replyBox').ckeditor(function () { ; }, {
-        skin: 'office2003',
-        height: _editorDefaultHeight,
-        startupFocus: true,
-        extraPlugins: (_isSafariMobile ? '' : 'autogrow,') + 'find,image',
-        removePlugins: (_isSafariMobile ? 'autogrow,' : '') + 'elementspath,tab',
-        autoGrow_onStartup: false,
-        autoGrow_minHeight: 100,
-        resize_enabled: false,
-        enableTabKeyTools: false,
-        enterMode: CKEDITOR.ENTER_BR,
-        defaultLanguage: 'en',
-        toolbar_Full: [
-            { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', '-', 'RemoveFormat'] },
-            { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'] },
-            { name: 'insert', items: ['Link', 'Unlink', 'Image', 'Flash', 'Table', 'HorizontalRule'] },
-            { name: 'styles', items: ['FontSize', 'TextColor', 'BGColor'] },
-        ],
-        toolbarCanCollapse: true
-    });
+    $('#replyBox').ckeditor();
     $('#replyBox').ckeditorGet().on('key', function (e) { replyKeyPressed(e, id); });
     var currScrollTop = $('#commentsArea').scrollTop();
     var scrollNeeded = currScrollTop + $('#sendReplyLink').position().top + $('#sendReplyLink').height() - ($('#commentsArea').offset().top + $('#commentsArea').height());
@@ -525,6 +562,8 @@ function AddComment() {
     }
 }
 
+// Unsubscribe disabled for now.
+/*
 function unsubscribe(e, threadId) {
     if (!e)
         e = window.event;
@@ -548,6 +587,7 @@ function unsubscribe(e, threadId) {
         window.setTimeout(function () { _srConnection.server.unsubscribe(threadId).done(function () { window.location.href = _baseUrl; }); }, IPAD_SIGNALR_DELAY);
     }
 }
+*/
 
 function pageKeyDown(e) {
     // If we're entering a new comment, skip checking for unread.

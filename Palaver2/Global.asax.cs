@@ -18,20 +18,12 @@ You should have received a copy of the GNU General Public License
 along with Palaver.  If not, see <http://www.gnu.org/licenses/>.
 */
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 using System.Web.Routing;
 using System.Data.Entity;
 using System.Data.Entity.Migrations;
-using Microsoft.AspNet.SignalR;
-using Microsoft.AspNet.SignalR.Configuration;
-using Microsoft.AspNet.SignalR.Infrastructure;
-using Microsoft.AspNet.SignalR.Hosting;
-using Microsoft.AspNet.SignalR.Hubs;
 using Palaver2.Models;
-using CodeFirstMembership.Models;
+using Microsoft.AspNet.SignalR;
 
 namespace Palaver2
 {
@@ -49,8 +41,10 @@ namespace Palaver2
         {
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
 
-            //routes.MapConnection<MessageConnection>("echo", "/echo");
-            //RouteTable.Routes.MapHubs();
+			//routes.MapConnection<MessageCollection>("echo", "/echo");
+			var hubConfig = new HubConfiguration();
+			hubConfig.EnableDetailedErrors = true;
+            RouteTable.Routes.MapHubs(hubConfig);
 
             routes.MapRoute(
                 "Thread_Comment", // Route name
@@ -71,24 +65,25 @@ namespace Palaver2
 
         protected void Application_Start()
         {
-            AreaRegistration.RegisterAllAreas();
+			//Database.SetInitializer<PalaverDb>(new DropCreateDatabaseIfModelChanges<Palaver2.Models.PalaverDb>());
+			//Database.SetInitializer<PalaverDb>(new CodeFirstContextInit());
 
-            Database.SetInitializer<PalaverDb>(new DropCreateDatabaseIfModelChanges<Palaver2.Models.PalaverDb>());
-            //Database.SetInitializer<PalaverDb>(new DropCreateDatabaseAlways<Palaver2.Models.PalaverDb>());
+			//Database.SetInitializer<PalaverDb>(new CodeFirstContextInit());
+			//var Context = new PalaverDb();
+			//Context.Database.Initialize(true);
+			//Context.Users.FirstOrDefault();
 
-            //Database.SetInitializer<PalaverDb>(new CodeFirstContextInit());
-            //var Context = new PalaverDb();
-            //Context.Users.FirstOrDefault();
+			// Update the database if needed.
+			//var migratorConfig = new Palaver2.Migrations.Configuration();
+			//var dbMigrator = new DbMigrator(migratorConfig);
+			//dbMigrator.Update();
 
-            // Update the database if needed.
-            var migratorConfig = new Palaver2.Migrations.Configuration();
-            var dbMigrator = new DbMigrator(migratorConfig);
-            dbMigrator.Update();
-            
+			AreaRegistration.RegisterAllAreas();
             RegisterGlobalFilters(GlobalFilters.Filters);
-            RegisterRoutes(RouteTable.Routes);
 
-            //GlobalHost.Configuration.ConnectionTimeout = TimeSpan.FromSeconds( 20 );
+            GlobalHost.Configuration.DisconnectTimeout = TimeSpan.FromSeconds(15);
+			GlobalHost.Configuration.KeepAlive = TimeSpan.FromSeconds(5);
+			RegisterRoutes(RouteTable.Routes);
         }
     }
 }
