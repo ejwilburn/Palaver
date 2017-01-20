@@ -238,7 +238,7 @@ function addThemeSwitcher(container, position) {
 		.css($.extend(pos, position))
 		.appendTo('body');
     $('#themeSwitcher').themeswitcher({
-            imgpath: _baseUrl + "/Content/images/themeswitcher/",
+            imgpath: _baseUrl + "Content/images/themeswitcher/",
             loadTheme: "ui-lightness",
             jqueryUiVersion: "1.10.0"
 		});
@@ -267,7 +267,7 @@ function addThread(thread)
         notify('Palaver thread posted by ' + thread.authorName + '.', thread.text, thread.threadId, thread.commentId);
     }
     else {
-        window.location.href = _baseUrl + "/Thread/" + thread.commentId;
+        window.location.href = _baseUrl + "Thread/" + thread.commentId;
     }
     updateTitle();
 }
@@ -329,7 +329,7 @@ function notify(title, message, threadId, commentId) {
     var filteredMessage = innerDiv.textContent || innerDiv.innerText;
     filteredMessage = $.trim(filteredMessage.substring(0, NOTIFICATION_SNIPPET_SIZE));
     var notification = new Notification( title, {
-    	icon: _baseUrl + '/Content/images/new_message-icon.gif',
+    	icon: _baseUrl + 'Content/images/new_message-icon.gif',
     	body: filteredMessage
     });
     notification.onclick = function () {
@@ -362,7 +362,7 @@ function updateTitle() {
 }
 
 function GetThreads() {
-    $.get(_baseUrl + '/home/GetThreads',
+    $.get(_baseUrl + 'home/GetThreads',
         null,
         function (payload) {
             $('#threads').html(payload);
@@ -380,7 +380,7 @@ function markRead(comment){
 
         updateThreadUnread($(comment).attr("data-subject-id"));
 
-        jQuery.get(_baseUrl + '/home/MarkRead', data);
+        jQuery.get(_baseUrl + 'home/MarkRead', data);
     }
     updateTitle();
 }
@@ -438,16 +438,16 @@ function GetComments(id, isBack) {
     // Otherwise, use a redirect.
 
     if (!History.enabled) {
-        window.location.href = _baseUrl + '/Thread/' + id;
+        window.location.href = _baseUrl + 'Thread/' + id;
         return;
     } else {
         // Change our URL.
         if (!isBack) {
             _allowBack = false;
             if (_initialCommentId != null)
-                History.pushState({ threadId: id, commentId: _initialCommentId }, document.title, _baseUrl + '/Thread/' + id + '/' + _initialCommentId);
+                History.pushState({ threadId: id, commentId: _initialCommentId }, document.title, _baseUrl + 'Thread/' + id + '/' + _initialCommentId);
             else
-                History.pushState({ threadId: id }, document.title, _baseUrl + '/Thread/' + id);
+                History.pushState({ threadId: id }, document.title, _baseUrl + 'Thread/' + id);
             _allowBack = true;
         }
         // Blank out current comments change the class to commentsLoading.
@@ -455,7 +455,7 @@ function GetComments(id, isBack) {
 
         $('#comments').html('');
         $.get(
-            _baseUrl + '/home/GetComments',
+            _baseUrl + 'home/GetComments',
             thread,
             function (data) {
                 $('#comments').html(data);

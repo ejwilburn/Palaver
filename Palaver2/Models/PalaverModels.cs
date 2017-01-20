@@ -34,6 +34,7 @@ using Newtonsoft.Json;
 using System.Data.Common;
 using System.Data.Entity.Infrastructure;
 using System.Data.Entity.Infrastructure.DependencyResolution;
+using System.Data.Entity.ModelConfiguration.Conventions;
 
 namespace Palaver2.Models
 {
@@ -122,8 +123,27 @@ namespace Palaver2.Models
 				return DefaultManifestTokenResolver.ResolveManifestToken(connection);
 			}
 		}
-	}*/
+	}
 
+	public class LowerCaseNamesConvention : Convention
+	{
+		public LowerCaseNamesConvention()
+		{
+			this.Types().Configure(t =>
+		   	{
+				   var name = t.ClrType.Name;
+				   t.ToTable(name.ToLower() + "s");
+		   	});
+
+			this.Properties().Configure(c =>
+			{
+				var name = c.ClrPropertyInfo.Name;
+				var newName = name.ToLower();
+				c.HasColumnName(newName);
+			});
+		}
+	}
+*/
 
 	public class PalaverDb : DbContext
     {
@@ -136,13 +156,35 @@ namespace Palaver2.Models
 
 		public PalaverDb() : base("Palaver")
 		{
-			Database.SetInitializer<PalaverDb>(null);
-			//Database.SetInitializer<PalaverDb>(new CodeFirstContextInit());
 			this.Database.CommandTimeout = 180;
 			this.Configuration.LazyLoadingEnabled = false;
 		}
 
-        public int GetUnreadCommentCount(Comment subject, Guid userid)
+		protected override void OnModelCreating(DbModelBuilder modelBuilder)
+		{
+			Database.SetInitializer<PalaverDb>(null);
+			// Database.SetInitializer<PalaverDb>(new CodeFirstContextInit());
+			// modelBuilder.Conventions.Add(new LowerCaseNamesConvention());
+			/*
+			modelBuilder.Properties().Configure(c =>
+			{
+				var name = c.ClrPropertyInfo.Name;
+				var newName = name.ToLower();
+				c.HasColumnName(newName);
+			});
+
+			modelBuilder.Entity<User>().HasMany(c => c.Roles)
+				.WithMany(p => p.Users).Map(
+				m =>
+				{
+					m.MapLeftKey("role_roleid");
+					m.MapRightKey("user_userid");
+					m.ToTable("roleusers");
+				});
+			*/
+		}
+
+		public int GetUnreadCommentCount(Comment subject, Guid userid)
         {
             var q = from c in this.Comments
                     join r in this.UnreadItems on c.CommentId equals r.Comment.CommentId

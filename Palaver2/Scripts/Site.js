@@ -54,6 +54,6 @@ function addThemeSwitcher(container, position) {
     $('<div id="themeContainer" style="position: absolute; overflow-x: hidden;"></div>')
 		.css($.extend(pos, position))
 		.appendTo(container || 'body')
-		.themeswitcher();
+		.themeswitcher( { imgpath: '/Content/images/themeswitcher/' } );
 	;
 };
