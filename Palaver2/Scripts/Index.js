@@ -40,7 +40,7 @@ function initPage(baseUrl, threadId, commentId) {
     _initialCommentId = commentId;
 
     // Setup layouts.
-    addLayouts();
+    //addLayouts();
 
     // Bind to State Change
     if (History.enabled) {
@@ -72,31 +72,6 @@ function initPage(baseUrl, threadId, commentId) {
 
     // Update the page title.
     updateTitle();
-
-    // Default links to target _blank
-    CKEDITOR.on('dialogDefinition', function (ev) {
-        // Take the dialog name and its definition from the event data.
-        var dialogName = ev.data.name;
-        var dialogDefinition = ev.data.definition;
-
-        // Check if the definition is from the dialog we're
-        // interested on (the Link dialog).
-        if (dialogName == 'link') {
-            // FCKConfig.LinkDlgHideAdvanced = true
-            dialogDefinition.removeContents('advanced');
-            // FCKConfig.LinkDlgHideTarget = true
-            //dialogDefinition.removeContents('target');
-
-            //Enable this part only if you don't remove the 'target' tab in the previous block.
- 
-            // FCKConfig.DefaultLinkTarget = '_blank'
-            // Get a reference to the "Target" tab.
-            var targetTab = dialogDefinition.getContents( 'target' );
-            // Set the default value for the URL field.
-            var targetField = targetTab.get( 'linkTargetType' );
-            targetField[ 'default' ] = '_blank';
-        }
-    });
 
     // Set up hover for the unsubscribe buttons for threads.
     // Disabled for now.
@@ -183,7 +158,7 @@ function startSignalr()
     	hideDisconnected();
     });
 
-    $.connection.hub.logging = true;
+    // $.connection.hub.logging = true;
     if (!_isSafariMobile)
     	startHub();
     else {
@@ -201,48 +176,6 @@ function startHub()
 		    console.log("Connected, transport = " + $.connection.hub.transport.name);
 	});
 }
-
-function addLayouts() {
-    myLayout = $('.page').layout({
-			west__size:			400,
-            north__size:        70,
-            south__size:         30,
-            south__resizable:    false,
-            north__resizable: false,
-            north__onclose_start: function () {
-                $('#themeContainer').hide();
-            },
-            north__onopen_end: function () {
-                $('#themeContainer').show();
-            }
-        });
-
-	// THEME SWITCHER
-    addThemeSwitcher('.ui-layout-north', { top: '25px', right: '5px' });
-	// if a new theme is applied, it could change the height of some content,
-	// so call resizeAll to 'correct' any header/footer heights affected
-	// NOTE: this is only necessary because we are changing CSS *AFTER LOADING* using themeSwitcher
-	setTimeout( myLayout.resizeAll, 100 ); /* allow time for browser to re-render with new theme */
-}
-
-/**
-*	addThemeSwitcher
-*
-*	Remove the cookie set by the UI Themeswitcher to reset a page to default styles
-*
-*	Dependancies: /Scripts/themeswitchertool.js
-*/
-function addThemeSwitcher(container, position) {
-    var pos = { top: '10px', right: '10px', "z-Index": 100, position: 'absolute' };
-    $('<div id="themeContainer"><div id="themeSwitcher" style="position: absolute; z-Index: 100"></div></div>')
-		.css($.extend(pos, position))
-		.appendTo('body');
-    $('#themeSwitcher').themeswitcher({
-            imgpath: _baseUrl + "Content/images/themeswitcher/",
-            loadTheme: "ui-lightness",
-            jqueryUiVersion: "1.10.0"
-		});
-};
 
 function addThread(thread)
 {
@@ -482,7 +415,7 @@ function selectThread(threadId) {
 function WriteReply(id) {
     // Close other reply divs.
     try {
-        $('#replyBox').ckeditorGet().destroy();
+        $('#replyBox').summernote('destroy');
     }
     catch (ex) {
         ; // Do nothing.
@@ -490,13 +423,28 @@ function WriteReply(id) {
     $('#replyDiv').remove();
 
     // Create a new reply div.
-    $('li[data-id="' + id + '"]').append('<div id="replyDiv" style="margin-left: 20px;" onkeypress="replyKeyPressed(event,' + id + ')"><textarea id="replyBox" style="height: 15px; width: 100%; margin:0;" /><a id="sendReplyLink" tabindex="1" href="javascript:;" onclick="SendReply(' + id + ')" class="submit">submit</a><a tabindex="2" href="javascript:;" onclick="CancelReply()">cancel</a></div>');
-    $('#replyBox').ckeditor();
-    $('#replyBox').ckeditorGet().on('key', function (e) { replyKeyPressed(e, id); });
+    $('div.comment[data-id="' + id + '"]').append('<div id="replyDiv" style="margin-left: 20px;"><textarea id="replyBox" style="height: 15px; width: 100%; margin:0;" /><a id="sendReplyLink" tabindex="1" href="javascript:;" onclick="SendReply(' + id + ')" class="submit">submit</a><a tabindex="2" href="javascript:;" onclick="CancelReply()">cancel</a></div>');
+    var replyBox = $('#replyBox');
+    replyBox.summernote().on('summernote.keydown', function (we, e) { replyKeyDown(we, e, id); })
+    	.on('summernote.keyup', function (we, e) { replyKeyUp(we, e, id); })
+    	.on('summernote.image.upload', function (we, files) {
+    		imgurUpload(we, files);
+    	})
+    	.summernote('focus');
+    $('#summernote').summernote({
+    	callbacks: {
+    		onImageUpload: function(files) {
+    			var fileUrl = imgurUpload(files)
+
+    		}
+    	}
+    });
+    /*
     var currScrollTop = $('#commentsArea').scrollTop();
     var scrollNeeded = currScrollTop + $('#sendReplyLink').position().top + $('#sendReplyLink').height() - ($('#commentsArea').offset().top + $('#commentsArea').height());
     if ( scrollNeeded > currScrollTop )
         $('#commentsArea').scrollTop(scrollNeeded);
+        */
 }
 
 function isSafariMobile() {
@@ -507,13 +455,18 @@ function isSafariMobile() {
         return false;
 }
 
-function replyKeyPressed(e, commentId) {
-    // Save if shift+enter is pressed.
-    if (e.data.keyCode == 2228237) {
+// Handle shift+enter to save and escape to cancel.
+var shiftDown = false;
+function replyKeyDown(we, e, commentId) {
+    if (e.keyCode == 16) {
+    	shiftDown = true;
+    	return true;
+    }
+    else if (e.keyCode == 13) {
         SendReply(commentId);
         return false;
     }
-    else if (e.data.keyCode == 27)
+    else if (e.keyCode == 27)
     {
         CancelReply();
         return false;
@@ -521,9 +474,16 @@ function replyKeyPressed(e, commentId) {
     return true;
 }
 
+function replyKeyUp(we, e, commentId) {
+    if (e.keyCode == 16) {
+    	shiftDown = false;
+    }
+    return true;
+}
+
 function SendReply(commentId) {
-    var text = $('#replyBox').val();
-    $('#replyBox').ckeditorGet().destroy();
+    var text = $('#replyBox').summernote('code');
+    $('#replyBox').summernote('destroy');
     $('#replyDiv').remove();
 
     // Make sure all URLs in the reply have a target.  If not, set it to _blank.
@@ -545,7 +505,7 @@ function SendReply(commentId) {
 }
 
 function CancelReply() {
-    $('#replyBox').ckeditorGet().destroy();
+    $('#replyBox').summernote('destroy');
     $('#replyDiv').remove();
 }
 
@@ -561,6 +521,141 @@ function AddComment() {
         window.setTimeout(function () { _srConnection.server.newThread(text); }, IPAD_SIGNALR_DELAY);
     }
 }
+
+function imgurUpload(files) {
+	$.ajax({
+		url: 'https://api.imgur.com/3/image',
+		type: 'POST',
+		headers: {
+			Authorization: 'Client-ID fb944f4922deb66',
+			Accept: 'application/json'
+		},
+		data: {
+			type: 'base64',
+			image: files
+		},
+		success: function(result) {
+            var image = $('<img>').attr('src', 'https://imgur.com/gallery/' + result.data.id);
+            $('#summernote').summernote("insertNode", image[0]);
+		},
+		error: function (xhr, ajaxOptions, thrownError) {
+			alert('Error uploading image to imgur.  Status: ' + xhr.status + ' Thrown error: ' + thrownError +
+				' Response: ' + xhr.responseText);
+		}
+    });
+}
+	/*
+	$.ajax({ 
+	    url: 'https://api.imgur.com/3/image',
+	    headers: {
+	        'Authorization': 'Client-ID YOUR_CLIENT_ID'
+	    },
+	    type: 'POST',
+	    data: {
+	        'image': 'helloworld.jpg'
+	    },
+	    success: function() { console.log('cool'); }
+	});
+    $.ajax({
+        url: 'http://api.imgur.com/3/image',
+        type: 'POST',
+        data: {
+            type: 'base64',
+            image: file,
+            Authorization: 'Client-ID fb944f4922deb66',
+            key: 'YOUR-API-KEY',
+            name: 'neon.jpg',
+            title: 'test title',
+            caption: 'test caption',
+        },
+        dataType: 'json'
+    }).success(function(data) {
+        w.location.href = data['upload']['links']['imgur_page'];
+    }).error(function() {
+        alert('Could not reach api.imgur.com. Sorry :(');
+        w.close();
+    });
+	$.ajax({
+	    url: "https://api.imgur.com/3/upload",
+	    type: "POST",
+	    datatype: "json",
+	    data: {image: imgUrl},
+	    success: showMe,
+	    error: showMe,
+	    beforeSend: function (xhr) {
+	        xhr.setRequestHeader("Authorization", "Client-ID " + clientId);
+	    }
+	});
+	$('#image-upload').fileupload({
+	        headers: {"Authorization": "Client-ID fb944f4922deb66"},
+	        url: "https://api.imgur.com/3/image",
+	        dataType: 'json',
+	        done: function (e, data) {
+	            $.each(data.result.files, function (index, file) {
+	                $('<p/>').text(file.name).appendTo(document.body);
+	            });
+	        },
+	        progressall: function (e, data) {
+	            var progress = parseInt(data.loaded / data.total * 100, 10);
+	            $('#progress .progress-bar').css('width', progress + '%');
+	        }
+	});
+	*/
+
+//function imgurUpload(file) {
+//    // Exit if it's not an image.
+//    if (!file || !file.type.match(/image.*/))
+//    	return;
+
+//    document.body.className = "uploading";
+//    var fd = new FormData();
+//    fd.append("image", file);
+//    var xhr = new XMLHttpRequest();
+//    xhr.open("POST", "https://api.imgur.com/3/image.json");
+//    xhr.onload = function() {
+//        document.querySelector("#link").href = JSON.parse(xhr.responseText).data.link;
+//        document.body.className = "uploaded";
+//    }
+    
+//    xhr.setRequestHeader('Authorization', 'Client-ID fb944f4922deb66');
+    
+//    // Ok, I don't handle the errors. An exercise for the reader.
+//    /* And now, we send the formdata */
+//    xhr.send(fd);
+//}
+
+/*
+function extractToken(hash) {
+	var match = hash.match(/access_token=(\w+)/);
+	return !!match && match[1];
+}
+
+function imgurUpload(token) {
+	$imgurUpload.show();
+	$group.hide();
+
+	var auth;
+	if (token) auth = 'Bearer ' + token;
+	else auth = 'Client-ID ' + clientId;
+
+	$.ajax({
+		url: 'https://api.imgur.com/3/image',
+			type: 'POST',
+			headers: {
+			Authorization: auth,
+			Accept: 'application/json'
+		},
+		data: {
+			image: localStorage.dataBase64,
+			type: 'base64'
+		},
+		success: function(result) {
+			var id = result.data.id;
+			window.location = 'https://imgur.com/gallery/' + id;
+		}
+	});
+}
+*/
 
 // Unsubscribe disabled for now.
 /*

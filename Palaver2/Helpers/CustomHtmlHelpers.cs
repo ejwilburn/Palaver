@@ -23,11 +23,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using System.Web.Mvc.Html;
 using Palaver2.Models;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Configuration;
 using CodeFirstMembership.Models;
+using System.IO;
+using System.Web.UI;
 
 namespace Palaver2.Helpers
 {
@@ -65,242 +68,31 @@ namespace Palaver2.Helpers
             return output;
         }
 
-        public static string ResolvePath(String relativePath)
-        {
-            string root = ConfigurationManager.AppSettings["SiteRoot"];
-            if (relativePath != null && relativePath.Trim().Length > 0)
-                return root + "/" + relativePath;
-            else
-                return root;
-        }
-
-        public static HtmlString RenderComments(List<Comment> thread)
-        {
-            StringBuilder html = new StringBuilder();
-
-            // Get a list of unread items and convert it to a dictionary for easy searching when building comments.
-            PalaverDb db = new PalaverDb();
-            int? subjectId = thread[0].SubjectId;
-            List<UnreadItem> unreadList = db.UnreadItems.Include("Comment").Where(r => r.User.UserId == CodeFirstMembership.CodeFirstSecurity.CurrentUserId && r.Comment.SubjectId == subjectId).ToList<UnreadItem>();
-            List<int> unreadItems = new List<int>();
-            foreach (UnreadItem unread in unreadList)
-                unreadItems.Add(unread.Comment.CommentId);
-
-            html.AppendLine("<ul class=\"commentlist\">");
-
-            html.AppendLine(BuildComments(thread[0], unreadItems));
-            
-            html.AppendLine("</ul>");
-
-            return new HtmlString(html.ToString());
-        }
-
-		public static string BuildComments(Comment comment)
+		public static string RenderPartialToString(string controlName, object viewData)
 		{
-			return BuildComments(comment, null);
+			ViewPage viewPage = new ViewPage() { ViewContext = new ViewContext() };
+
+			viewPage.ViewData = new ViewDataDictionary(viewData);
+			viewPage.Controls.Add(viewPage.LoadControl(controlName));
+
+			StringBuilder sb = new StringBuilder();
+			using (StringWriter sw = new StringWriter(sb))
+			{
+				using (HtmlTextWriter tw = new HtmlTextWriter(sw))
+				{
+					viewPage.RenderControl(tw);
+				}
+			}
+
+			return sb.ToString();
 		}
 
-        public static string BuildComments(Comment comment, List<int> unreadItems)
-        {
-            StringBuilder html = new StringBuilder();
-            bool newComment = false;
-            
-            html.AppendFormat("<li class=\"comment\" data-id=\"{0}\">\n", comment.CommentId);
-            html.AppendFormat("<div data-id=\"{0}\" data-parent-id=\"{1}\" data-subject-id=\"{2}\" tabindex=\"99\" class=\"", comment.CommentId,
-                (!comment.ParentCommentId.HasValue ? comment.CommentId : comment.ParentCommentId), comment.SubjectId);
-
-            // unread comment?
-            if (comment.User.UserId != CodeFirstMembership.CodeFirstSecurity.CurrentUserId)
-            {
-                if (unreadItems != null && unreadItems.Contains(comment.CommentId))
-                {
-                    html.Append("newcomment ");
-                    newComment = true;
-                }
-            }
-
-            html.Append("comment\"" + ( newComment ? " onclick=\"markRead(this)\"" : "" ) + ">");
-            html.AppendFormat("<span class=\"user\">{0}</span><span class=\"commentTime\">[{1}]</span><p>", comment.User.Username, comment.LastUpdatedTime.ToLocalTime().ToShortDateString() +
-                " " + comment.LastUpdatedTime.ToLocalTime().ToShortTimeString());
-            html.Append(comment.Text + "\n</p>\n</div>\n");
-
-            html.AppendLine("<ul class=\"commentlist\">");
-            if (comment.Comments != null && comment.Comments.Count > 0)
-            {
-
-                foreach (Comment c in comment.Comments)
-                {
-                    html.Append(BuildComments(c, unreadItems));   
-                }
-
-            }
-            html.AppendLine("</ul>");
-            html.AppendFormat("<div title=\"Reply\" class=\"reply\" onclick=\"WriteReply({0})\"><HR class=\"reply\" /></div>",  comment.CommentId);
-            html.AppendLine("</li>");
-
-			return html.ToString();
-        }
-
-        public static string BuildThreads(IEnumerable<Comment> threads)
-        {
-            StringBuilder html = new StringBuilder();
-
-            // Get our unread counts by thread id.
-            PalaverDb db = new PalaverDb();
-            Dictionary<int, int> unreadCounts = db.GetUnreadCommentTotals(CodeFirstMembership.CodeFirstSecurity.CurrentUserId);
-
-            html.AppendLine("<ul>");
-
-            foreach (Comment c in threads)
-            {
-                html.AppendLine(BuildThread(c, unreadCounts));
-            }
-
-            html.AppendLine("</ul>");
-
-            return html.ToString();
-        }
-
-        public static string BuildThread(Comment comment, Dictionary<int, int> unreadCounts)
-        {
-            int unreadCount = 0;
-            if (unreadCounts != null && unreadCounts.ContainsKey((int)comment.SubjectId))
-                unreadCount = unreadCounts[(int)comment.SubjectId];
-
-            String rootUrl = HttpContext.Current.Request.ApplicationPath;
-            if (!rootUrl.EndsWith("/"))
-                rootUrl += "/";
-            if (unreadCount > 0)
-                return string.Format("<li data-thread-id=\"{0}\" class=\"newcomments\" onclick=\"GetComments({0})\">" +
-                    "<span class=\"threadTime\">[{3}]</span> - <a href=\"javascript:;\">{1}</a>" +
-                    "&nbsp;<span id=\"newCommentsCount{0}\" class=\"threadNewComments\">({2})</span>" +
-                    // Unsubscribe disabled for now.
-                    /*
-                    "<img src=\"" + rootUrl + "Content/images/Delete-icon.png\" height=\"14px\" " +
-                    "alt=\"Unsubscribe from Thread\" onclick=\"unsubscribe(event, {0})\" class=\"unsubscribe\" />" +
-                    */
-                    "</li>",
-                    comment.CommentId, comment.Text, unreadCount, getDisplayTime(comment.LastUpdatedTime.ToLocalTime()), rootUrl);
-            else
-                return string.Format("<li data-thread-id=\"{0}\" onclick=\"GetComments({0})\"><span class=\"threadTime\">[{3}]</span> - <a  href=\"javascript:;\">{1}</a>" +
-                    "&nbsp;<span id=\"newCommentsCount{0}\" class=\"threadNewComments\"></span>" +
-                    // Unsubscribe disabled for now.
-                    /*
-                    "<img src=\"" + rootUrl + "Content/images/Delete-icon.png\" height=\"14px\" " +
-                    "alt=\"Unsubscribe from Thread\" onclick=\"unsubscribe(event, {0})\" class=\"unsubscribe\" />" +
-                    */
-                    "</li>",
-                    comment.CommentId, comment.Text, unreadCount, getDisplayTime(comment.LastUpdatedTime.ToLocalTime()), rootUrl);
-        }
-
-        public static string BuildThreadsMobile(List<Comment> threads)
-        {
-            StringBuilder html = new StringBuilder();
-
-            // Get our unread counts by thread id.
-            PalaverDb db = new PalaverDb();
-            Dictionary<int, int> unreadCounts = db.GetUnreadCommentTotals(CodeFirstMembership.CodeFirstSecurity.CurrentUserId);
-
-            foreach (Comment c in threads)
-                html.AppendLine(BuildThreadMobile(c, unreadCounts));
-
-            return html.ToString();
-        }
-
-        public static string BuildThreadMobile(Comment comment, Dictionary<int, int> unreadCounts)
-        {
-            StringBuilder html = new StringBuilder();
-
-            int unreadCount = 0;
-            if (unreadCounts != null && unreadCounts.ContainsKey((int)comment.SubjectId))
-                unreadCount = unreadCounts[(int)comment.SubjectId];
-
-
-            String rootUrl = HttpContext.Current.Request.ApplicationPath;
-            if (!rootUrl.EndsWith("/"))
-                rootUrl += "/";
-
-            html.AppendLine("<li data-theme=\"c\">");
-            if (unreadCount > 0)
-                html.AppendFormat("<a data-thread-id=\"{0}\" class=\"newcomments\" href=\"" + rootUrl + "Thread/{0}\" data-transition=\"slide\">[{3}] - {1} ({2})</a>",
-                    comment.CommentId, comment.Text, unreadCount, getDisplayTime(comment.LastUpdatedTime.ToLocalTime()), rootUrl);
-            else
-                html.AppendFormat("<a data-thread-id=\"{0}\" href=\"" + rootUrl + "Thread/{0}\" data-transition=\"slide\">[{3}] - {1}</a>",
-                    comment.CommentId, comment.Text, unreadCount, getDisplayTime(comment.LastUpdatedTime.ToLocalTime()), rootUrl);
-            html.AppendLine("</li>");
-
-            return html.ToString();
-        }
-
-        public static HtmlString RenderCommentsMobile(int? ThreadId)
-        {
-            StringBuilder html = new StringBuilder();
-
-            // Get our comments.
-            PalaverDb db = new PalaverDb();
-            List<Comment> thread = db.Comments.Include("Comments").Include("User").Where(x => x.SubjectId == ThreadId).OrderBy(x => x.CreatedTime).ToList();
-
-            // Get a list of unread items and convert it to a dictionary for easy searching when building comments.
-            int? subjectId = thread[0].SubjectId;
-            List<UnreadItem> unreadList = db.UnreadItems.Include("Comment").Where(r => r.User.UserId == CodeFirstMembership.CodeFirstSecurity.CurrentUserId && r.Comment.SubjectId == subjectId).ToList<UnreadItem>();
-            List<int> unreadItems = new List<int>();
-            foreach (UnreadItem unread in unreadList)
-                unreadItems.Add(unread.Comment.CommentId);
-
-            html.AppendLine(BuildCommentsMobile(thread[0], unreadItems));
-
-            return new HtmlString(html.ToString());
-        }
-
-        public static string BuildCommentsMobile(Comment comment, List<int> unreadItems)
-        {
-            StringBuilder html = new StringBuilder();
-            bool newComment = false;
-
-            //html.AppendFormat("<li data-theme=\"c\" class=\"comment\" data-id=\"{0}\">\n", comment.CommentId);
-            html.AppendFormat("<div data-id=\"{0}\" data-parent-id=\"{1}\" data-subject-id=\"{2}\" tabindex=\"99\" class=\"", comment.CommentId,
-                (!comment.ParentCommentId.HasValue ? comment.CommentId : comment.ParentCommentId), comment.SubjectId);
-
-            // unread comment?
-            if (comment.User.UserId != CodeFirstMembership.CodeFirstSecurity.CurrentUserId)
-            {
-                if (unreadItems != null && unreadItems.Contains(comment.CommentId))
-                {
-                    html.Append("newcomment ");
-                    newComment = true;
-                }
-            }
-
-            html.Append("comment\"" + (newComment ? " onclick=\"markRead(this)\"" : "") + ">");
-            html.AppendFormat("<span class=\"user\">{0}</span><span class=\"commentTime\">[{1}]</span><p>", comment.User.Username, comment.LastUpdatedTime.ToLocalTime().ToShortDateString() +
-                " " + comment.LastUpdatedTime.ToLocalTime().ToShortTimeString());
-            html.Append(comment.Text + "\n</p>\n</div>\n");
-
-
-            //html.AppendLine("<ul data-role=\"listview\" data-divider-theme=\"b\" data-inset=\"true\" class=\"commentlist\">");
-            html.AppendLine("<div class=\"childComment\">");
-            if (comment.Comments != null && comment.Comments.Count > 0)
-            {
-
-                foreach (Comment c in comment.Comments)
-                {
-                    html.Append(BuildCommentsMobile(c, unreadItems));
-                }
-
-            }
-            html.AppendLine("</div>");
-            //html.AppendLine("</ul>");
-            //html.AppendLine("</li>");
-
-            return html.ToString();
-        }
-
-        private static string getDisplayTime(DateTime time)
-        {
-            if (DateTime.Today == time.Date)
-                return time.ToShortTimeString();
-            else
-                return time.ToShortDateString();
-        }
+        public static string GetDisplayTime(DateTime time)
+		{
+			if (DateTime.Today == time.Date)
+				return time.ToShortTimeString();
+			else
+				return time.ToShortDateString();
+		}
     }
 }

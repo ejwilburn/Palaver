@@ -18,11 +18,82 @@ You should have received a copy of the GNU General Public License
 along with Palaver.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+html, body, .container-fluid, .row {
+  height: 100%;
+}
+
+nav {
+  height: 50px;
+}
+
+body {
+  padding-top: 50px;
+}
+
+.sidebar {
+  background-color: #CCCCCC;
+}
+
+@media (min-width: 992px) {
+  .sidebar {
+    position: relative;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000;
+    display: block;
+    background-color: #CCCCCC;
+  }
+}
+
+.scroll-y { overflow-y: auto; }
+.scroll-x { overflow-x: auto; }
+
+#commentsArea {
+	padding-left: 0px;
+	padding-right: 0px;
+}
+
+#threads {
+	margin-top: 10px;
+}
+
+.list-group-item {
+	line-height: 50%;
+}
+
+.list-group-item:hover {
+	background-color: gray;
+}
+
+.comment {
+	margin: 10px;
+}
+
+.comment .card-block {
+	padding: 10px;
+}
+
+.comment .card {
+	margin-top: 5px;
+}
+
+.comment .card-header {
+	padding: 4px;
+}
+
+div .reply {
+	margin: 0px;
+	padding: 0px;
+	height: 25px;
+}
+
 /*----------------------------------------------------------
 The base color for this template is #5c87b2. If you'd like
 to use a different color start by replacing all instances of
 #5c87b2 with your new color.
 ----------------------------------------------------------*/
+/*
 header, html, body {
     background-color: #5c87b2;
     font-size: .85em;
@@ -33,7 +104,56 @@ header, html, body {
     height: 100%;
     overflow: hidden;
 }
+*/
 
+/*
+body { margin: 0; -webkit-text-size-adjust: 100%; }
+.page { left: 0; right: 0; top: 0; bottom: 0; }
+.pageRow, .pageCol, .page { overflow: hidden; position: absolute; }
+.pageRow { left: 0; right: 0; }
+.pageCol { top: 0; bottom: 0; }
+.scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.scroll-y { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.fill, .pane { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100% }
+.pane { display: none; }
+*/
+
+/* Pane configuration */
+/*
+.left.pageCol { width: 300px; }
+.right.pageCol { left: 300px; right: 0; }
+.header.row { height: 75px; line-height: 75px; }
+.body.pageRow { top: 75px; bottom: 50px; }
+.footer.pageRow { height: 50px; bottom: 0; line-height: 50px; }
+
+body { font-family: 'Helvetica Neue', Arial, Sans-Serif; }
+.header, .footer {
+    color: #eee; background: #696f77; text-shadow: 1px 1px 1px rgba(0,0,0,0.5); padding: 0 0.5em;
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#696f77), color-stop(100%,#28343b));
+    background: -webkit-linear-gradient(top, #696f77 0%,#28343b 100%); background: -ms-linear-gradient(top, #696f77 0%,#28343b 100%); 
+}
+.header { font-size: 1.4em; }
+.body, .pane { background: #ddd }
+.right.pageCol { border-left: 1px solid black; }
+.right.pageCol .body { padding: 0 1em; }
+.listview { padding: 0; margin: 0; font-weight: bold; color: #444; }
+.listview li { list-style-type: none; background: #eee; padding: 1em; border-top: 1px solid #aaa; border-bottom: 1px solid #fff; cursor: pointer; }
+.listview li.selected { background-color: #37F; color: White; }
+            
+.listview.inset { margin: 1em 0; }
+.listview.inset li { background: white; border: 2px solid #aaa; border-bottom-width: 0; }
+.listview.inset li:first-child { border-radius: 1em 1em 0em 0em }
+.listview.inset li:last-child { border-radius: 0em 0em 1em 1em; border-bottom-width: 2px; }
+            
+.tiles { overflow-y: hidden; }
+.tiles > ul { width: 1175px; }
+.tiles ul { margin: 0; padding: 0; white-space: nowrap; }
+.tiles li { list-style-type: none; display: inline-block; background-color: #080; width:150px; height: 150px; padding: 1em; color: White; margin: 5px; font-weight: bold; zoom:1; *display: inline; }
+
+button { display: block; border: 2px solid #aaa; line-height: normal; background-color: White; border-radius: 8px; margin: 8px 0; cursor: pointer; padding: 5px 20px; font-weight: bold; color: #333; }
+*/
+
+/*
 header, footer
 {
     overflow: hidden !important;
@@ -71,6 +191,7 @@ section {
 
 /* HEADINGS   
 ----------------------------------------------------------*/
+/*
 h1, h2, h3, h4, h5, h6 {
     font-size: 1.5em;
     color: #000;
@@ -97,18 +218,22 @@ h4 {
 h5, h6 {
     font-size: 1em;
 }
+*/
+*/
 
 /* PRIMARY LAYOUT ELEMENTS   
 ----------------------------------------------------------*/
 
 /* you can specify a greater or lesser percentage for the 
 page width. Or, you can specify an exact pixel width. */
+/*
 .page {
     width: 100%;
     height: 100%;
     margin-left: auto;
     margin-right: auto;
 }
+*/
 
 /*
 header, #header {
@@ -211,7 +336,7 @@ ul#menu li.selected a {
 
 /* FORM LAYOUT ELEMENTS   
 ----------------------------------------------------------*/
-
+/*
 fieldset {
     border: 1px solid #ddd;
     padding: 0 1.4em 1.4em 1.4em;
@@ -247,10 +372,11 @@ input[type="submit"] {
     font-size: 1.2em;
     padding: 5px;
 }
-
+*/
 /* TABLE
 ----------------------------------------------------------*/
 
+/*
 table {
     border: solid 1px #e8eef4;
     border-collapse: collapse;
@@ -267,9 +393,10 @@ table th {
     background-color: #e8eef4;
     border: solid 1px #e8eef4;
 }
-
+*/
 /* MISC  
 ----------------------------------------------------------*/
+/*
 .clear {
     clear: both;
 }
@@ -277,7 +404,7 @@ table th {
 .error {
     color: Red;
 }
-
+*/
 /*
 nav, 
 #menucontainer {
@@ -318,6 +445,7 @@ div#title {
 
 /* Styles for validation helpers
 -----------------------------------------------------------*/
+/*
 .field-validation-error {
     color: #ff0000;
 }
@@ -339,9 +467,10 @@ div#title {
 .validation-summary-valid {
     display: none;
 }
-
+*/
 /* Styles for editor and display helpers
 ----------------------------------------------------------*/
+/*
 .display-label, 
 .editor-label {
     margin: 1em 0 0 0;
@@ -363,7 +492,7 @@ div#title {
 .tri-state {
     width: 6em;
 }
-
+*/
 
 /* styles for palaver */
 /*
@@ -406,6 +535,7 @@ div#comments
 }
 */
 
+/*
 div#comments ul.commentlist
 {
     padding-left: 15px;
@@ -554,22 +684,24 @@ p {
 {
     cursor: wait;
 }
+*/
 
 /* remove padding and scrolling from elements that contain an Accordion OR a content-div */
-.ui-layout-center ,	/* has content-div */
-.ui-layout-west ,	/* has Accordion */
-.ui-layout-east ,	/* has content-div ... */
-.ui-layout-east .ui-layout-content { /* content-div has Accordion */
+/*
+.ui-layout-center ,
+.ui-layout-west ,
+.ui-layout-east ,
+.ui-layout-east .ui-layout-content { 
 	padding: 0;
 	overflow: hidden;
 }
 
 .ui-layout-center P.ui-layout-content {
 	line-height:	1.4em;
-	margin:			0; /* remove top/bottom margins from <P> used as content-div */
+	margin:			0; 
 }
 
-h3, h4 { /* Headers & Footer in Center & East panes */
+h3, h4 { 
 	font-size:		1.1em;
 	background:		#EEF;
 	border:			1px solid #BBB;
@@ -578,7 +710,7 @@ h3, h4 { /* Headers & Footer in Center & East panes */
 	margin:			0;
 }
 
-.ui-layout-east h4 { /* Footer in East-pane */
+.ui-layout-east h4 { 
 	font-size:		0.9em;
 	font-weight:	normal;
 	border-width:	1px 0 0;
@@ -593,3 +725,4 @@ div.blockMsg h1 {
 	color:		#fff;
 	font-size:	large;
 }
+*/

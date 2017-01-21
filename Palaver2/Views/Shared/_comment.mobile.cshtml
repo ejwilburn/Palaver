@@ -1,0 +1,20 @@
+﻿@model Palaver2.Models.Comment
+
+<div>
+	<div data-id="@Model.CommentId" @(if (Model.ParentCommentId.HasValue) { <text>data-parent-id="@Model.ParentCommentId"</text> } else { <text>data-parent-id="@Model.CommentId"</text> })
+		data-subject-id="@Model.SubjectId" tabindex="99" @(if (Model.isUnread) { <text>class="comment newcomment" onclick="markRead(this)"</text> } else { <text>class="comment"</text> }) >
+		<span class="user">Model.User.Username</span><span class="commentTime">[@Model.LastUpdatedTime.ToLocalTime().ToShortDateString() + 
+			" " + CustomHtmlHelpers.getDisplayTime(Model.LastUpdatedTime.ToLocalTime())]
+		</span>
+	</div>
+	<div>
+		@Model.Text
+	</div>
+	<div class="childcomment">
+		@foreach (var comment in Model.Comments)
+		{
+			Html.Partial("_comment.mobile", comment);
+		}
+	</div>
+	<div title="Reply" class="reply" onclick="WriteReply(@Model.CommentId)"><hr class="reply" /></div>
+</div>

@@ -23,9 +23,11 @@ using Microsoft.AspNet.SignalR;
 using Microsoft.AspNet.SignalR.Hubs;
 using System;
 using Palaver2.Models;
+using Palaver2.Helpers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Data.Entity;
+using System.Web.Mvc;
 using CodeFirstMembership.Models;
 using CodeFirstMembership;
 
@@ -83,7 +85,7 @@ public class MessageHub : Hub
         comment.SubjectId = comment.CommentId;
         db.SaveChanges();
 
-        string html = Palaver2.Helpers.CustomHtmlHelpers.BuildThread(comment, null);
+		string html = CustomHtmlHelpers.RenderPartialToString("~/Views/Shared/_comment.cshtml", comment);
 
         Message sendMessage = new Message()
         {
@@ -140,9 +142,9 @@ public class MessageHub : Hub
 
         db.SaveChanges();
 
-        Message sendMessage = new Message()
-        {
-            text = Palaver2.Helpers.CustomHtmlHelpers.BuildComments(comment, null),
+		Message sendMessage = new Message()
+		{
+			text = CustomHtmlHelpers.RenderPartialToString("~/Views/Shared/_comment.cshtml", comment),
             parentId = parentId,
             commentId = comment.CommentId,
             userid = currentUser.UserId.ToString(),

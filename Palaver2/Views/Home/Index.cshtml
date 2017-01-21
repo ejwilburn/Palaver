@@ -1,63 +1,32 @@
-﻿<!--
-Copyright 2012, Marcus McKinnon, E.J. Wilburn, Kevin Williams
-This program is distributed under the terms of the GNU General Public License.
-
-This file is part of Palaver.
-
-Palaver is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-(at your option) any later version.
-
-Palaver is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Palaver.  If not, see <http://www.gnu.org/licenses/>.
--->
-
-@{
+﻿@{
     ViewBag.Title = "Palaver2";
 }
 
 @using Palaver2.Models;
 @using System.Text.RegularExpressions;
 
-<!-- Load CKEditor -->
-<script src="~/Scripts/ckeditor/ckeditor.js" type="text/javascript"></script>
-<script src="~/Scripts/ckeditor/config.js" type="text/javascript"></script>
-<script src="~/Scripts/ckeditor/adapters/jquery.js" type="text/javascript"></script>
-<!-- Lod our page specific script. -->
-<script src="~/Scripts/Index.js" type="text/javascript"></script>
+<div id="contentDiv" class="container-fluid">
+	<div class="row">
+        <div class="col-md-3 sidebar">
+			<div id="threadList" class="card">
+			    <h3 class="card-header sticky-top">Threads</h3>
+			    <div class="card-block scroll-y">
+			        <form class="form-inline my-2 my-lg-0">
+			          <input  id="newcomment" class="form-control w-75 mr-sm-2" type="text" placeholder="Thread Title">
+			          <button class="btn btn-outline-success my-2 my-sm-0" type="submit" onclick="AddComment()">New</button>
+			        </form>
+			        <div id="threads">
+		            	@Html.Partial("_topcomments", (IEnumerable<Comment>)ViewBag.threads)
+			        </div>
+			    </div>
+			</div>
+		</div>
 
-<script type="text/javascript">
-    // Init the page, passing any thread Id passed in the query string and base URL of the app.
-    $(document).ready( function(){ initPage("@Url.Content("~")", @(ViewBag.ThreadId == null ? "null" : ViewBag.ThreadId), @(ViewBag.CommentId == null ? "null" : ViewBag.CommentId)); } );
-</script>
-
-<div id="threadList" class="ui-layout-west">
-    <h3 class="ui-widget-header">Threads</h3>
-    <div class="ui-layout-content ui-widget-content">
-        <div>
-            <table width="100%" style="border-style: none">
-                <tr style="border-style: none">
-                    <td style="border-style: none">@Html.TextBox("newcomment")</td>
-                    <td style="border-style: none" width="25px"><a href="javascript:;" onclick="AddComment()">New</a></td>
-                </tr>
-            </table>
-        </div>
-        <div id="threads" >
-            @Html.Partial("_topcomments", (IEnumerable<Comment>)ViewBag.Comments)
-        </div>
-    </div>
-</div>
-
-<div id="commentsArea" class="ui-layout-center">
-    <h3 class="ui-widget-header">Comments</h3>
-    <div id="comments" class="ui-layout-content ui-widget-content">
-    </div>
+        <div id="commentsArea" class="col-md-9 col-md-offset-3 content card">
+		    <h3 class="card-header sticky-top">Comments</h3>
+		    <div id="comments" class="card-block scroll-y"></div>
+		</div>
+	</div>
 </div>
 @Html.Hidden("userid", CodeFirstMembership.CodeFirstSecurity.CurrentUserId)
 

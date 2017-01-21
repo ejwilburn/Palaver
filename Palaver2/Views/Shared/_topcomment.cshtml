@@ -1,0 +1,13 @@
+﻿@model Palaver2.Models.Comment
+
+<a data-thread-id="@Model.CommentId" class="list-group-item border-0@(Model.unreadCount > 0 ? " newcomments" : "")"
+		onclick="GetComments(@Model.CommentId)" href="#">
+	<span class="threadTime">[@CustomHtmlHelpers.GetDisplayTime(Model.LastUpdatedTime.ToLocalTime())]</span>&nbsp;&nbsp;
+	<span class="threadText">@Model.Text</span>
+	@if (Model.unreadCount > 0)
+	{
+		<span id="newCommentsCount@Model.CommentId" class="threadNewComments badge badge-pill badge-primary">
+			@Model.unreadCount
+		</span>
+	}
+</a>

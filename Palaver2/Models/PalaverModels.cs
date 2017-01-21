@@ -35,6 +35,7 @@ using System.Data.Common;
 using System.Data.Entity.Infrastructure;
 using System.Data.Entity.Infrastructure.DependencyResolution;
 using System.Data.Entity.ModelConfiguration.Conventions;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Palaver2.Models
 {
@@ -53,9 +54,15 @@ namespace Palaver2.Models
         public int? ParentCommentId { get; set; }
         public virtual ICollection<Comment> Comments { get; set; }
         public int? SubjectId { get; set; }
+		[NotMapped]
+		public Boolean isUnread { get; set; }
+		[NotMapped]
+		public int unreadCount { get; set; }
 
         public Comment()
         {
+			isUnread = false;
+			unreadCount = 0;
             CreatedTime = DateTime.UtcNow;
             LastUpdatedTime = DateTime.UtcNow;
         }
@@ -156,8 +163,62 @@ namespace Palaver2.Models
 
 		public PalaverDb() : base("Palaver")
 		{
-			this.Database.CommandTimeout = 180;
-			this.Configuration.LazyLoadingEnabled = false;
+			Database.CommandTimeout = 180;
+			Configuration.LazyLoadingEnabled = false;
+		}
+
+
+		public List<Comment> GetThreads()
+		{
+			List<Comment> threads = Comments.Include("User").Where(x => !x.ParentCommentId.HasValue).OrderByDescending(x => x.LastUpdatedTime).ToList();
+
+			// Get unread counts for each thread for the current user.
+			Guid userId = CodeFirstMembership.CodeFirstSecurity.CurrentUserId;
+			var countTotals = from c in Comments
+							  join r in UnreadItems on c.CommentId equals r.Comment.CommentId
+							  where r.User.UserId == userId && r.Comment.SubjectId != null
+							  group r by r.Comment.SubjectId into g
+							  select new
+							  {
+								  ThreadId = g.Key,
+								  Count = g.Count()
+							  };
+
+
+			if (countTotals != null && countTotals.Count() > 0)
+			{
+				foreach (var count in countTotals)
+				{
+					threads.Find(t => t.CommentId == (int)count.ThreadId).unreadCount = (int)count.Count;
+				}
+			}
+
+			return threads;
+		}
+
+		public List<Comment> GetComments(int subjectId)
+		{
+			List<Comment> threadComments = Comments.Include("User").Include("Comments").Where(x => x.SubjectId == subjectId).OrderBy(x=> x.CreatedTime).ToList();
+
+			// Get unread flag for these comments and the current user.
+			Guid userId = CodeFirstMembership.CodeFirstSecurity.CurrentUserId;
+			var unread = UnreadItems.Where(ui => ui.User.UserId == userId && ui.Comment.SubjectId == subjectId).ToList();
+			/*
+			var unreadComments = (from c in threadComments
+								 join ui in UnreadItems on c.CommentId equals ui.Comment.CommentId
+			                     where ui.User.UserId == userId && c.SubjectId == subjectId
+			                     select ui.Comment.CommentId).ToList();
+			*/
+
+			if (unread != null & unread.Count > 0)
+			{
+				foreach (var ui in unread)
+				{
+					threadComments.Find(tc => tc.CommentId == ui.Comment.CommentId).isUnread = true;
+				}
+			}
+
+			return threadComments;
 		}
 
 		protected override void OnModelCreating(DbModelBuilder modelBuilder)
@@ -183,40 +244,6 @@ namespace Palaver2.Models
 				});
 			*/
 		}
-
-		public int GetUnreadCommentCount(Comment subject, Guid userid)
-        {
-            var q = from c in this.Comments
-                    join r in this.UnreadItems on c.CommentId equals r.Comment.CommentId
-                    where c.SubjectId == subject.CommentId && r.User.UserId == userid
-                    select new
-                    {
-                        c.CommentId
-                    };
-
-            return q.Count();
-        }
-
-        public Dictionary<int, int> GetUnreadCommentTotals(Guid userid)
-        {
-            Dictionary<int, int> counts = new Dictionary<int, int>();
-
-            var countTotals = from c in this.Comments
-                    join r in this.UnreadItems on c.CommentId equals r.Comment.CommentId
-                    where r.User.UserId == userid && c.SubjectId != null
-                    group r by r.Comment.SubjectId into g
-                    select new
-                    {
-                        ThreadId = g.Key, Count = g.Count()
-                    };
-
-            foreach (var count in countTotals)
-            {
-                counts.Add((int)count.ThreadId, (int)count.Count);
-            }
-
-            return counts;
-        }
     }
 
     public class CodeFirstContextInit : DropCreateDatabaseAlways<PalaverDb>

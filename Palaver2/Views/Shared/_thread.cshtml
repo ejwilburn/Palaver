@@ -1,0 +1,7 @@
+﻿@model Palaver2.Models.Comment
+
+<li data-theme="c">
+	<a data-thread-id="@Model.CommentId" @( if (Model.unreadCount > 0) { <text>class="newcomments"</text> }) href="~/Thread/@Model.CommentId" data-transition="slide">
+		[@CustomHtmlHelpers.GetDisplayTime(Model.LastUpdatedTime.ToLocalTime())]&nbsp;&nbsp;@Model.Text (@Model.unreadCount)
+	</a>
+</li>

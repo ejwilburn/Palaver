@@ -1040,6 +1040,34 @@
     <Content Include="Scripts\ckeditor\plugins\youtube\lang\vi.js" />
     <Content Include="Scripts\ckeditor\plugins\youtube\lang\zh.js" />
     <Content Include="Scripts\jquery.blockUI.js" />
+    <Content Include="Scripts\bootstrap.min.js" />
+    <Content Include="Scripts\bootstrap.js" />
+    <None Include="Content\bootstrap.min.css.map" />
+    <Content Include="Content\bootstrap.min.css" />
+    <None Include="Content\bootstrap.css.map" />
+    <Content Include="Content\bootstrap.css" />
+    <None Include="Content\bootstrap-reboot.min.css.map" />
+    <Content Include="Content\bootstrap-reboot.min.css" />
+    <None Include="Content\bootstrap-reboot.css.map" />
+    <Content Include="Content\bootstrap-reboot.css" />
+    <None Include="Content\bootstrap-grid.min.css.map" />
+    <Content Include="Content\bootstrap-grid.min.css" />
+    <None Include="Content\bootstrap-grid.css.map" />
+    <Content Include="Content\bootstrap-grid.css" />
+    <Content Include="Scripts\tether\tether.min.js" />
+    <Content Include="Scripts\tether\tether.js" />
+    <Content Include="Content\tether\tether.min.css" />
+    <Content Include="Content\tether\tether.css" />
+    <Content Include="Content\tether\tether-theme-basic.min.css" />
+    <Content Include="Content\tether\tether-theme-basic.css" />
+    <Content Include="Content\tether\tether-theme-arrows.min.css" />
+    <Content Include="Content\tether\tether-theme-arrows.css" />
+    <Content Include="Content\tether\tether-theme-arrows-dark.min.css" />
+    <Content Include="Content\tether\tether-theme-arrows-dark.css" />
+    <Content Include="Views\Shared\_topcomments.cshtml" />
+    <Content Include="Views\Shared\_topcomment.cshtml" />
+    <Content Include="Views\Shared\_thread.cshtml" />
+    <Content Include="Views\Shared\_comment.mobile.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />
@@ -1049,9 +1077,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Shared\_comment.cshtml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Views\Shared\_topcomments.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Home\Index.mobile.cshtml" />

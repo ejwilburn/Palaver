@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using System.Web.Mvc.Html;
 using Palaver2.Models;
 using Palaver2.Helpers;
 using CodeFirstMembership.Models;
@@ -38,25 +39,46 @@ namespace Palaver2.Controllers
         [Authorize]
         public ActionResult Index(string threadId)
         {
+			ViewBag.threads = db.GetThreads();
+			if (ParseThreadId(threadId))
+			{
+				ViewBag.comments = db.GetComments(ViewBag.threadId);
+			}
+			return View();
+			/*
             int intThreadId;
 
+			ViewBag.Threads = db.Comments.Where(x => !x.ParentCommentId.HasValue).ToList();
+
             // Guid userId = CodeFirstSecurity.GetUserId(HttpContext.User.Identity.Name);
-            var comments = from c in db.Comments
+
+			var threads = from c in db.Comments
                            // join s in db.Subscriptions on c.CommentId equals s.Subject.CommentId
                            where !c.ParentCommentId.HasValue // && s.User.UserId == userId
                            orderby c.LastUpdatedTime descending
                            select c;
-            ViewBag.Comments = comments;
-            if (threadId != null && int.TryParse(threadId, out intThreadId))
-                ViewBag.ThreadId = intThreadId;
+
+			if (threadId != null && int.TryParse(threadId, out intThreadId))
+			{
+				ViewBag.Comments = db.Comments.Where(x => x.SubjectId.Equals(intThreadId)).ToList();
+				ViewBag.ThreadId = intThreadId;
+			}
 
             return View();
+            */
         }
 
         [HttpGet]
         [Authorize]
         public ActionResult GetThread(string threadId)
         {
+			ViewBag.threads = db.GetThreads();
+			if (ParseThreadId(threadId))
+			{
+				ViewBag.comments = db.GetComments(ViewBag.threadId);
+			}
+			return View("Index");
+			/*
             int intThreadId;
 
             // Guid userId = CodeFirstSecurity.GetUserId(HttpContext.User.Identity.Name);
@@ -70,26 +92,19 @@ namespace Palaver2.Controllers
                 ViewBag.ThreadId = intThreadId;
 
             return View("Index");
+            */
         }
 
         [HttpGet]
         [Authorize]
         public ActionResult GetComment(string threadId, string commentId)
         {
-            int intThreadId;
-            int intCommentId;
-
-            // Guid userId = CodeFirstSecurity.GetUserId(HttpContext.User.Identity.Name);
-            var comments = from c in db.Comments
-                           // join s in db.Subscriptions on c.CommentId equals s.Subject.CommentId
-                           where !c.ParentCommentId.HasValue // && s.User.UserId == userId
-                           orderby c.LastUpdatedTime descending
-                           select c;
-            ViewBag.Comments = comments;
-            if (threadId != null && int.TryParse(threadId, out intThreadId))
-                ViewBag.ThreadId = intThreadId;
-            if (commentId != null && int.TryParse(commentId, out intCommentId))
-                ViewBag.CommentId = intCommentId;
+			ViewBag.threads = db.GetThreads();
+			if (ParseThreadId(threadId))
+			{
+				ViewBag.comments = db.GetComments(ViewBag.threadId);
+				ParseCommentId(commentId);
+			}
 
             return View("Index");
         }
@@ -98,16 +113,20 @@ namespace Palaver2.Controllers
         [Authorize]
         public ActionResult GetComments(int id)
         {
-            db.Configuration.LazyLoadingEnabled = false;
-            List<Comment> thread = db.Comments.Include("User").Where(x => x.SubjectId == id).OrderBy(x => x.CreatedTime).ToList();
+			//db.Configuration.LazyLoadingEnabled = false;
+			List<Comment> threadComments = db.GetComments(id);
 
-            return PartialView("_Comments", thread);
+            return PartialView("_Comments", threadComments);
         }
 
         [HttpGet]
         [Authorize]
         public ActionResult GetThreads()
         {
+			ViewBag.threads = db.GetThreads();
+			return View();
+
+			/*
             // Guid userId = CodeFirstSecurity.GetUserId(HttpContext.User.Identity.Name);
             var comments = from c in db.Comments
                            // join s in db.Subscriptions on c.CommentId equals s.Subject.CommentId
@@ -115,6 +134,7 @@ namespace Palaver2.Controllers
                            orderby c.LastUpdatedTime descending
                            select c;
             return Content(Helpers.CustomHtmlHelpers.BuildThreads(comments));
+			*/
         }
 
         [HttpGet]
@@ -139,7 +159,7 @@ namespace Palaver2.Controllers
 
         [HttpGet]
         [Authorize]
-        public ActionResult CreateComment(string text)
+        public ActionResult CreateThread(string text)
         {
             Comment c = new Comment() { 
                 Text = text,
@@ -149,9 +169,11 @@ namespace Palaver2.Controllers
             db.Comments.Add(c);
             db.SaveChanges();
 
-            ViewBag.Comments = db.Comments.Where(x => !x.ParentCommentId.HasValue).ToList();
+			//ViewBag.Comments = db.Comments.Where(x => !x.ParentCommentId.HasValue).ToList();
 
-            return PartialView("_topcomments");
+			ViewBag.threads = db.GetThreads();
+
+			return PartialView("_topcomments");
         }
 
         [HttpGet]
@@ -168,5 +190,29 @@ namespace Palaver2.Controllers
 
             return new EmptyResult();
         }
+
+		private Boolean ParseThreadId(String stringId)
+		{
+			int parsedId;
+			if (stringId != null && int.TryParse(stringId, out parsedId))
+			{
+				ViewBag.threadId = parsedId;
+				return true;
+			}
+
+			return false;
+		}
+
+		private Boolean ParseCommentId(String stringId)
+		{
+			int parsedId;
+			if (stringId != null && int.TryParse(stringId, out parsedId))
+			{
+				ViewBag.commentId = parsedId;
+				return true;
+			}
+
+			return false;
+		}
     }
 }
