@@ -1,0 +1,22 @@
+﻿<Properties StartupConfiguration="{A7F95485-4D9C-4374-8259-B7792A5777F3}|" GitUserInfo="UsingMD" NuGet.AddPackagesDialog.IncludePrerelease="True">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Palaver Status">
+    <Files>
+      <File FileName="Palaver2/Content/Site.css" Line="88" Column="12" />
+      <File FileName="Palaver2/Views/Shared/_comment.cshtml" Line="23" Column="12" />
+      <File FileName="Palaver2/Helpers/CustomHtmlHelpers.cs" Line="97" Column="1" />
+      <File FileName="Palaver2/Views/Shared/_thread.cshtml" Line="5" Column="98" />
+      <File FileName="Palaver2/Views/Shared/_topcomment.cshtml" Line="6" Column="6" />
+      <File FileName="Palaver2/Views/Home/Index.cshtml" Line="10" Column="39" />
+      <File FileName="Palaver2/Views/Shared/_Layout.cshtml" Line="21" Column="16" />
+      <File FileName="Palaver2/Scripts/Index.js" Line="538" Column="18" />
+      <File FileName="Palaver Status" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.ItemProperties.Palaver2 PreferredExecutionTarget="MonoDevelop.Default" />
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MultiItemStartupConfigurations />
+</Properties>

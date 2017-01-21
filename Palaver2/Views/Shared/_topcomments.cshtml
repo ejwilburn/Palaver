@@ -1,0 +1,6 @@
+﻿@model IEnumerable<Palaver2.Models.Comment>
+
+@foreach (Palaver2.Models.Comment thread in ViewBag.threads)
+{
+	Html.RenderPartial("_topcomment", thread);
+}
