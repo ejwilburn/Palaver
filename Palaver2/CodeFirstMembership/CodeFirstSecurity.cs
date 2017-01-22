@@ -94,17 +94,8 @@ namespace CodeFirstMembership
         public static bool ChangePassword(string userName, string currentPassword, string newPassword)
         {
             VerifyProvider();
-            bool success = false;
-            try
-            {
-                dynamic currentUser = Membership.GetUser(userName, true);
-                success = currentUser.ChangePassword(currentPassword, newPassword);
-            }
-            catch (ArgumentException generatedExceptionName)
-            {
-               
-            }
-            return success;
+            dynamic currentUser = Membership.GetUser(userName, true);
+            return currentUser.ChangePassword(currentPassword, newPassword);
         }
 
         public static bool ConfirmAccount(string accountConfirmationToken)
